@@ -18,7 +18,10 @@ const useDataApi = (initialUrl, initialData) => {
   const { useState, useEffect, useReducer } = React;
   const [url, setUrl] = useState(initialUrl);
 //it knows the url here. so initialURL is good
-
+//////////////////////////////////
+  //TIM --> not sure about this
+  //initialData comes in empty on restock.
+  //////////////////////////////
   const [state, dispatch] = useReducer(dataFetchReducer, {
     isLoading: false,
     isError: false,
@@ -95,6 +98,7 @@ const Products = (props) => {
   const [{ data, isLoading, isError }, doFetch] = useDataApi(
     "http://localhost:1337/api/products",
     {
+      //data starts empty
       data: [],
     }
   );
@@ -114,6 +118,8 @@ const Products = (props) => {
   };
 
   const deleteCartItem = (index) => {
+     // this is the index in the cart not in the Product List
+
     //remove the item from the cart
     let newCart = cart.filter((item, i) => index != i);
 
@@ -138,7 +144,7 @@ const Products = (props) => {
   let list = items.map((item, index) => {
     let n = index + 1049;
     let url = "https://picsum.photos/id/" + n + "/120/120";
-    item.name=item.name.replace(/\_/g,"").replace(":","");
+    //item.name=item.name.replace(/\_/g,"").replace(":","");
     return (
       <div key={index}>
         <Image src={url} width={80} roundedCircle></Image>
@@ -189,12 +195,21 @@ const Products = (props) => {
 
   // TODO: implement the restockProducts function
   const restockProducts = (url) => {
-
+ //url ==> strapi but it is a different structure than example
+    //{"data":[{"id":1,"attributes":{"name":"Apples","country":"Italy","cost":3,"instock":10,"createdAt":"2022-06-26T03:29:25.142Z","updatedAt":"2022-06-26T03:36:02.683Z","publishedAt":"2022-06-26T03:32:54.386Z"}},{
+    //vs
+    //[{"id":1, "name":"Apples","country":"Italy"...}]
+    //////////////////
+    // how do I get inside data in the new format:  data.data.attributes or data.attributes
+    
     doFetch(url);
-    let newItems = data.map((item) => {
-      let {name, country, cost, instock } = item;
-      return {name, country, cost, instock };
+    
+    let newItems = data.data.map((item) => {
+    let {attributes: {name}, attributes: {country}, attributes: {cost}, attributes: {instock}} = item;
+    return {name, country, cost, instock};
+   
     });
+  
     setItems([...items, ...newItems]);
   };
 
@@ -219,9 +234,11 @@ const Products = (props) => {
       <Row>
         <form
           onSubmit={(event) => {
-            restockProducts(`http://localhost:1337/api/${query}`);
-            console.log(`Restock called on ${query}`);
+            //switch the order.  preventDefault() first.  THEN call restockProducts
             event.preventDefault();
+            restockProducts(`${query}`);
+            console.log(`Restock called on ${query}`);
+            
           }}
         >
           <input
